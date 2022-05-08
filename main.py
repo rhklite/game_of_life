@@ -3,10 +3,12 @@ import gui
 
 
 def main():
-
-    width, height = 16*10, 9*10
+    
+    ratio = [16, 9]
+    multiplier = 10
+    width, height = multiplier*ratio[0], multiplier*ratio[1]
     game = board.GameBoardHash(width, height, {n:0 for n in range(width*height)})
-    simulator = gui.PygameRenderer(game, width=width, height=height, cellsize=14, save=True)   
+    simulator = gui.PygameGUI(game, width=width, height=height, cellsize=14)   
     simulator.run()    
 
 if __name__ == '__main__':

@@ -70,6 +70,9 @@ class GameBoardHash(BaseBoard):
         if board is not None:
             self.board = board
 
+        self.next_to_die = list()
+        self.updated_cell = self.board
+        
         self.neighbors_map = {
             idx: self.compute_neighbors(idx) for idx in range(len(self))
         }
@@ -79,7 +82,9 @@ class GameBoardHash(BaseBoard):
     def step(self):
         old_board = copy.deepcopy(self.board)
         
-        new_update_list = []
+        new_update_list = list()
+        next_to_die = list()
+        updated_cell = list()
         for idx in self.update_list:
             cell_state = old_board[idx]
             n_neighbors, neighbors = self.count_neighbors(idx, old_board)            
@@ -87,10 +92,14 @@ class GameBoardHash(BaseBoard):
             if new_state != cell_state:
                 self.board[idx] = new_state
                 new_update_list +=neighbors
+                updated_cell.append(idx)
+                if new_state == 0:
+                    next_to_die.append(idx)
 
         self.update_list = set(new_update_list)
+        self.next_to_die = next_to_die   
+        self.updated_cell = updated_cell
         
-    # @db.timer
     def count_neighbors(self, idx, board):
         neighbors = self.neighbors_map[idx]
         live_neighbors = 0
@@ -157,15 +166,26 @@ class GameBoardHash(BaseBoard):
         board = [state for state in self.board.values()]
         return np.array(board).reshape(self.height, self.width)
 
+    def get_updated_cell(self):
+        return [self.flat_to_2d(cell) for cell in self.updated_cell]
+    
     def set_cell(self, row, col):
-        cell_idx = col*self.width + row
+        cell_idx = self.coord_to_1d(row, col)
 
         self.board[cell_idx] = 1
         neighbors = self.neighbors_map[cell_idx]
         
         to_update = neighbors + [cell_idx]
         self.update_list = self.update_list.union(set(to_update))
+        
+    def coord_to_1d(self, row_idx, col_idx):
+        return col_idx*self.width + row_idx
+    
+    def flat_to_2d(self, idx):
+        return idx%self.width, idx//self.width
 
+    def get_next_to_die(self):
+        return [self.flat_to_2d(cell) for cell in self.next_to_die]
     
 class GameBoard2D(BaseBoard):
     """a basic naive 2D gameboard version, keeps a change list to update

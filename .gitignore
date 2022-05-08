@@ -1,3 +1,6 @@
 image/
 __pycache__/
 *pyc
+build/
+dist/
+main.spec
