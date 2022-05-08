@@ -1,6 +1,4 @@
 import pygame
-from tool import debug_util as db
-
 
 class Color:
     alive = (128, 189, 38)

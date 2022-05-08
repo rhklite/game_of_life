@@ -1,7 +1,6 @@
 import board
 import gui
 
-
 def main():
     
     ratio = [16, 9]

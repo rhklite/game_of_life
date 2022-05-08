@@ -6,8 +6,6 @@ import random
 
 import numpy as np
 
-from tool import debug_util as db
-
 
 class BaseBoard(abc.ABC):
     def __init__(self, width: int, height: int) -> None:
@@ -187,78 +185,3 @@ class GameBoardHash(BaseBoard):
     def get_next_to_die(self):
         return [self.flat_to_2d(cell) for cell in self.next_to_die]
     
-class GameBoard2D(BaseBoard):
-    """a basic naive 2D gameboard version, keeps a change list to update
-    runs a bit slow, ~30fps at 100x100
-    """
-    def __init__(self, width: int, height: int, board=None) -> None:
-        super().__init__(width, height)
-
-        # initialize the board with random
-        self.board, self.update_list = self.create_random_2d_world()
-        if board is not None:
-            self.board = board
-            
-        self.neighbors = [
-            (-1, 0),
-            (-1, -1),
-            (0, -1),
-            (1, -1),
-            (1, 0),
-            (1, 1),
-            (0, 1),
-            (-1, 1),
-        ]
-
-    # @db.timer
-    def step(self):
-        new_board = copy.deepcopy(self.board)
-        new_update_list = list()
-        for row, col in self.update_list:
-            n_neighbors, neighbors = self.count_neighbors(row, col)
-            cell_state = self.board[row][col]
-            new_state = self.new_cell_state(cell_state, n_neighbors)
-
-            if new_state != cell_state:
-                new_board[row][col] = new_state
-                new_update_list += neighbors
-
-        self.board = new_board
-        self.update_list = set(new_update_list)
-
-    def count_neighbors(self, row: int, col: int):
-        neighbors = list()
-        live_neighbors = 0
-        for row_increment, col_increment in self.neighbors:
-            n_row, n_col = row + row_increment, col + col_increment
-            if self.index_is_inbound(n_row, n_col):
-                live_neighbors += self.board[n_row][n_col]
-                neighbors.append((n_row, n_col))
-
-        return live_neighbors, neighbors
-
-    def index_is_inbound(self, row: int, col: int) -> bool:
-        row_in = row >= 0 and row < self.width
-        col_in = col >= 0 and col < self.height
-        return all([row_in, col_in])
-
-    def create_random_2d_world(
-        self,
-    ) -> tuple[np.ndarray, list[tuple[int, int]]]:
-        board = [
-            [random.choice([0, 1]) for _ in range(self.height)]
-            for _ in range(self.width)
-        ]
-        update_list = [
-            (i, j) for i in range(self.width) for j in range(self.height)
-        ]
-
-        return board, update_list
-
-    def get_board(self):
-        return self.board
-    
-    def set_cell(self, row, col):
-        self.board[row][col] = 1
-        _, neighbors = self.count_neighbors(row, col)
-        self.update_list = self.update_list.union(set(neighbors+[(row, col)]))
