@@ -52,55 +52,51 @@ class BaseBoard(abc.ABC):
 
 
 class GameBoardHash(BaseBoard):
-    def __init__(self, width: int, height: int) -> None:
+    """uses dictionary to precompute all the neighbors indices rather than computing it live.
+    ~60fps at 100x100
+    """
+    def __init__(self, width: int, height: int, board = None) -> None:
         super().__init__(width, height)
-
+        
+        
         self.board, self.update_list = self.create_random_1d_world()
+        if board is not None:
+            self.board = board
 
-        self.neighbors_increment = [
-            -1,  # left
-            1,  # right
-            -self.width,  # top
-            self.width,  # bottom
-            -1 - self.width,  # top left
-            1 - self.width,  # top right
-            -1 + self.width,  # bottom left
-            1 + self.width,  # bottom right
-        ]
         self.neighbors_map = {
             idx: self.compute_neighbors(idx) for idx in range(len(self))
         }
     
     @db.timer
     def step(self):
-        new_update_list = list()
-        new_board = copy.deepcopy(self.board)
-
+        
+        old_board = copy.deepcopy(self.board)
+        
+        new_update_list = []
         for idx in self.update_list:
-            cell_state = self.board[idx]
-            n_neighbors, neighbors = self.count_neighbors(idx)
+            cell_state = old_board[idx]
+            n_neighbors, neighbors = self.count_neighbors(idx, old_board)            
             new_state = self.new_cell_state(cell_state, n_neighbors)
             if new_state != cell_state:
-                new_board[idx] = new_state
-                new_update_list += neighbors
+                self.board[idx] = new_state
+                new_update_list +=neighbors
 
-        self.board = new_board
-        self.update_list = new_update_list
+        self.update_list = set(new_update_list)
         
-    def count_neighbors(self, idx):
+    # @db.timer
+    def count_neighbors(self, idx, board):
         neighbors = self.neighbors_map[idx]
         live_neighbors = 0
         for n in neighbors:
-            live_neighbors += self.board[n]
+            live_neighbors += board[n]
             
         return live_neighbors, neighbors    
 
     def create_random_1d_world(self):
 
         board = {idx: random.choice([0, 1]) for idx in range(len(self))}
-        update_list = [i for i in range(len(self))]
+        update_list = {i for i in range(len(self))}
         return board, update_list
-
 
     def compute_neighbors(self, idx):
 
@@ -157,11 +153,17 @@ class GameBoardHash(BaseBoard):
 
 
 class GameBoard2D(BaseBoard):
-    def __init__(self, width: int, height: int) -> None:
+    """a basic naive 2D gameboard version, keeps a change list to update
+    runs a bit slow, ~30fps at 100x100
+    """
+    def __init__(self, width: int, height: int, board=None) -> None:
         super().__init__(width, height)
 
         # initialize the board with random
         self.board, self.update_list = self.create_random_2d_world()
+        if board is not None:
+            self.board = board
+            
         self.neighbors = [
             (-1, 0),
             (-1, -1),

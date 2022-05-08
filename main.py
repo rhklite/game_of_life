@@ -12,18 +12,15 @@ from tool import debug_util as db
 def main():
 
     np.random.seed(0)
-
-    delay = 0.3
+    width, height = 100, 100
     simulation_iteration = 1000
-    game = board.GameBoardHash(10, 10)
-    display = render.MatplotlibRenderer()
-    folder = f'change_list_{datetime.now()}'
-    os.makedirs('image/' + folder)
-    # len(game)
+    game = board.GameBoardHash(width, height)
+    display = render.PygameRenderer(width=width, height=height, save=True)
+    
     for i in range(simulation_iteration):
-        display(game.get_board())
+        display.view(game.get_board())
         game.step()
-        plt.savefig(f"image/{folder}/{i}.png")
+        
 
 
 if __name__ == '__main__':
