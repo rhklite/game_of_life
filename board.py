@@ -38,6 +38,10 @@ class BaseBoard(abc.ABC):
     def __len__(self):
         return self.width * self.height
 
+    
+    def view(self):
+        print(self.get_board())
+    
     @property
     def dim(self):
         return (self.width, self.height)
@@ -50,9 +54,10 @@ class BaseBoard(abc.ABC):
     def get_board(self):
         pass
 
-    def view(self):
-        print(self.get_board())
-    
+    @abc.abstractmethod
+    def set_cell(self):
+        pass
+
 class GameBoardHash(BaseBoard):
     """uses dictionary to precompute all the neighbors indices rather than computing it live.
     ~60fps at 100x100
@@ -72,7 +77,6 @@ class GameBoardHash(BaseBoard):
 
     # @db.timer
     def step(self):
-        
         old_board = copy.deepcopy(self.board)
         
         new_update_list = []
@@ -104,46 +108,46 @@ class GameBoardHash(BaseBoard):
     def compute_neighbors(self, idx):
 
         neighbors = list()
-        idx_row = idx // self.height
-        top_idx = idx - self.height
-        if top_idx >= 0 and top_idx // self.height == idx_row - 1:
+        idx_row = idx // self.width
+        top_idx = idx - self.width
+        if top_idx >= 0 and top_idx // self.width == idx_row - 1:
             neighbors.append(top_idx)
         # bottom
-        bottom_idx = idx + self.height
-        if bottom_idx < len(self) and bottom_idx // self.height == idx_row + 1:
+        bottom_idx = idx + self.width
+        if bottom_idx < len(self) and bottom_idx // self.width == idx_row + 1:
             neighbors.append(bottom_idx)
         # left
         left_idx = idx - 1
-        if left_idx >= 0 and left_idx // self.height == idx_row:
+        if left_idx >= 0 and left_idx // self.width == idx_row:
             neighbors.append(left_idx)
         # right
         right_idx = idx + 1
-        if right_idx < len(self) and right_idx // self.height == idx_row:
+        if right_idx < len(self) and right_idx // self.width == idx_row:
             neighbors.append(right_idx)
 
         # top_left
-        top_left_idx = idx - 1 - self.height
-        if top_left_idx >= 0 and top_left_idx // self.height == idx_row - 1:
+        top_left_idx = idx - 1 - self.width
+        if top_left_idx >= 0 and top_left_idx // self.width == idx_row - 1:
             neighbors.append(top_left_idx)
 
         # top right
-        top_right_idx = idx + 1 - self.height
-        if top_right_idx >= 0 and top_right_idx // self.height == idx_row - 1:
+        top_right_idx = idx + 1 - self.width
+        if top_right_idx >= 0 and top_right_idx // self.width == idx_row - 1:
             neighbors.append(top_right_idx)
 
         # bottom_left
-        bottom_left_idx = idx - 1 + self.height
+        bottom_left_idx = idx - 1 + self.width
         if (
             bottom_left_idx < len(self)
-            and bottom_left_idx // self.height == idx_row + 1
+            and bottom_left_idx // self.width == idx_row + 1
         ):
             neighbors.append(bottom_left_idx)
 
         # bottom_right
-        bottom_right_idx = idx + 1 + self.height
+        bottom_right_idx = idx + 1 + self.width
         if (
             bottom_right_idx < len(self)
-            and bottom_right_idx // self.height == idx_row + 1
+            and bottom_right_idx // self.width == idx_row + 1
         ):
             neighbors.append(bottom_right_idx)
 
@@ -151,10 +155,18 @@ class GameBoardHash(BaseBoard):
 
     def get_board(self):
         board = [state for state in self.board.values()]
+        return np.array(board).reshape(self.height, self.width)
 
-        return np.array(board).reshape(self.dim)
+    def set_cell(self, row, col):
+        cell_idx = col*self.width + row
 
+        self.board[cell_idx] = 1
+        neighbors = self.neighbors_map[cell_idx]
+        
+        to_update = neighbors + [cell_idx]
+        self.update_list = self.update_list.union(set(to_update))
 
+    
 class GameBoard2D(BaseBoard):
     """a basic naive 2D gameboard version, keeps a change list to update
     runs a bit slow, ~30fps at 100x100
@@ -225,3 +237,8 @@ class GameBoard2D(BaseBoard):
 
     def get_board(self):
         return self.board
+    
+    def set_cell(self, row, col):
+        self.board[row][col] = 1
+        _, neighbors = self.count_neighbors(row, col)
+        self.update_list = self.update_list.union(set(neighbors+[(row, col)]))
