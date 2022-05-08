@@ -83,6 +83,9 @@ class PygameGUI:
                         self.view()
                         self.game.step()
 
+                    if event.key == pygame.K_r:
+                        self.game.board = {n:0 for n in range(self.game.width*self.game.height)}
+                    
                 if pygame.mouse.get_pressed()[0]:
                     try:
                         mouse_position = event.pos

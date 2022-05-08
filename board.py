@@ -4,8 +4,6 @@ import abc
 import copy
 import random
 
-import numpy as np
-
 
 class BaseBoard(abc.ABC):
     def __init__(self, width: int, height: int) -> None:
