@@ -53,6 +53,7 @@ class PygameRenderer:
         *args,
         **kwargs,
     ) -> None:
+        self.max_size = cellsize
         self.cellsize = cellsize
         self.game = game
 
@@ -107,7 +108,7 @@ class PygameRenderer:
                     if event.key == pygame.K_SPACE:
                         self.space_bar_pressed = not self.space_bar_pressed
                         self.pause = self.space_bar_pressed
-                        
+                
                 if pygame.mouse.get_pressed()[0]:
                     # self.pause = True
                     try:
@@ -118,14 +119,7 @@ class PygameRenderer:
                         self.update_view(cell_row, cell_col)
                     except AttributeError:
                         pass
-                
-                # if event.type == pygame.MOUSEBUTTONUP:
-                #     self.pause = False
-                
-                
-                # if self.space_bar_pressed:
-                #     self.pause = True 
-                
+
             if not self.pause:    
                 self.view()
                 self.game.step()
