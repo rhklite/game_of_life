@@ -55,15 +55,17 @@ class PygameGUI:
                 pygame.draw.rect(self.window, color, cell)
         pygame.display.update()
 
-    def update_view(self, row, col):
+    def update_view(self, row, col, state):
         new_rectangle = pygame.Rect(
             row * self.cellsize,
             col * self.cellsize,
             self.cellsize - 1,
             self.cellsize - 1,
         )
-
-        pygame.draw.rect(self.window, Color.alive, new_rectangle)
+        color = Color.alive
+        if not state:
+            color = Color.background
+        pygame.draw.rect(self.window, color, new_rectangle)
         pygame.display.update(new_rectangle)
 
     def run(self):
@@ -91,8 +93,9 @@ class PygameGUI:
                         mouse_position = event.pos
                         cell_row = mouse_position[0] // self.cellsize
                         cell_col = mouse_position[1] // self.cellsize
-                        self.game.set_cell(cell_row, cell_col)
-                        self.update_view(cell_row, cell_col)
+                        state = self.game.set_cell(cell_row, cell_col)
+                        
+                        self.update_view(cell_row, cell_col, state)
                     except AttributeError:
                         pass
 

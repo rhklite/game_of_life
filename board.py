@@ -1,65 +1,16 @@
-from __future__ import annotations
-
-import abc
 import copy
 import random
 
+import numpy as np
 
-class BaseBoard(abc.ABC):
-    def __init__(self, width: int, height: int) -> None:
-        self.width = width
-        self.height = height
-
-        self.board = None
-
-    def __repr__(self) -> str:
-        return f"{self.board}"
-
-    def new_cell_state(self, cell_state: int, n_neighbor: int):
-        if not cell_state:
-            if n_neighbor == 3:
-                # for empty cell, it lives if it has 3 neighbors
-                return 1
-            return 0
-
-        if n_neighbor <= 1:
-            # for cell with 1 or no neighbors, it dies by solitude
-            return 0
-        elif n_neighbor <= 3:
-            # for cell with 2 or 3 neighbors, it lives
-            return 1
-        # cells with 4 or more neighbors dies by over population
-        return 0
-
-    def __len__(self):
-        return self.width * self.height
-
-    
-    def view(self):
-        print(self.get_board())
-    
-    @property
-    def dim(self):
-        return (self.width, self.height)
-
-    @abc.abstractmethod
-    def step(self):
-        pass
-
-    @abc.abstractmethod
-    def get_board(self):
-        pass
-
-    @abc.abstractmethod
-    def set_cell(self):
-        pass
-
-class GameBoardHash(BaseBoard):
+class GameBoardHash:
     """uses dictionary to precompute all the neighbors indices rather than computing it live.
     ~60fps at 100x100
     """
     def __init__(self, width: int, height: int, board = None) -> None:
-        super().__init__(width, height)
+        self.width = width
+        self.height = height
+
         
         
         self.board, self.update_list = self.create_random_1d_world()
@@ -168,11 +119,13 @@ class GameBoardHash(BaseBoard):
     def set_cell(self, row, col):
         cell_idx = self.coord_to_1d(row, col)
 
-        self.board[cell_idx] = 1
+        self.board[cell_idx] = 1 - self.board[cell_idx]
         neighbors = self.neighbors_map[cell_idx]
         
         to_update = neighbors + [cell_idx]
         self.update_list = self.update_list.union(set(to_update))
+        
+        return self.board[cell_idx]
         
     def coord_to_1d(self, row_idx, col_idx):
         return col_idx*self.width + row_idx
@@ -183,3 +136,21 @@ class GameBoardHash(BaseBoard):
     def get_next_to_die(self):
         return [self.flat_to_2d(cell) for cell in self.next_to_die]
     
+    def new_cell_state(self, cell_state: int, n_neighbor: int):
+        if not cell_state:
+            if n_neighbor == 3:
+                # for empty cell, it lives if it has 3 neighbors
+                return 1
+            return 0
+
+        if n_neighbor <= 1:
+            # for cell with 1 or no neighbors, it dies by solitude
+            return 0
+        elif n_neighbor <= 3:
+            # for cell with 2 or 3 neighbors, it lives
+            return 1
+        # cells with 4 or more neighbors dies by over population
+        return 0
+
+    def __len__(self):
+        return self.width * self.height
