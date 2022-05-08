@@ -50,7 +50,9 @@ class BaseBoard(abc.ABC):
     def get_board(self):
         pass
 
-
+    def view(self):
+        print(self.get_board())
+    
 class GameBoardHash(BaseBoard):
     """uses dictionary to precompute all the neighbors indices rather than computing it live.
     ~60fps at 100x100
@@ -66,8 +68,9 @@ class GameBoardHash(BaseBoard):
         self.neighbors_map = {
             idx: self.compute_neighbors(idx) for idx in range(len(self))
         }
-    
-    @db.timer
+
+
+    # @db.timer
     def step(self):
         
         old_board = copy.deepcopy(self.board)
@@ -101,46 +104,46 @@ class GameBoardHash(BaseBoard):
     def compute_neighbors(self, idx):
 
         neighbors = list()
-        idx_row = idx // self.width
-        top_idx = idx - self.width
-        if top_idx >= 0 and top_idx // self.width == idx_row - 1:
+        idx_row = idx // self.height
+        top_idx = idx - self.height
+        if top_idx >= 0 and top_idx // self.height == idx_row - 1:
             neighbors.append(top_idx)
         # bottom
-        bottom_idx = idx + self.width
-        if bottom_idx < len(self) and bottom_idx // self.width == idx_row + 1:
+        bottom_idx = idx + self.height
+        if bottom_idx < len(self) and bottom_idx // self.height == idx_row + 1:
             neighbors.append(bottom_idx)
         # left
         left_idx = idx - 1
-        if left_idx >= 0 and left_idx // self.width == idx_row:
+        if left_idx >= 0 and left_idx // self.height == idx_row:
             neighbors.append(left_idx)
         # right
         right_idx = idx + 1
-        if right_idx < len(self) and right_idx // self.width == idx_row:
+        if right_idx < len(self) and right_idx // self.height == idx_row:
             neighbors.append(right_idx)
 
         # top_left
-        top_left_idx = idx - 1 - self.width
-        if top_left_idx >= 0 and top_left_idx // self.width == idx_row - 1:
+        top_left_idx = idx - 1 - self.height
+        if top_left_idx >= 0 and top_left_idx // self.height == idx_row - 1:
             neighbors.append(top_left_idx)
 
         # top right
-        top_right_idx = idx + 1 - self.width
-        if top_right_idx >= 0 and top_right_idx // self.width == idx_row - 1:
+        top_right_idx = idx + 1 - self.height
+        if top_right_idx >= 0 and top_right_idx // self.height == idx_row - 1:
             neighbors.append(top_right_idx)
 
         # bottom_left
-        bottom_left_idx = idx - 1 + self.width
+        bottom_left_idx = idx - 1 + self.height
         if (
             bottom_left_idx < len(self)
-            and bottom_left_idx // self.width == idx_row + 1
+            and bottom_left_idx // self.height == idx_row + 1
         ):
             neighbors.append(bottom_left_idx)
 
         # bottom_right
-        bottom_right_idx = idx + 1 + self.width
+        bottom_right_idx = idx + 1 + self.height
         if (
             bottom_right_idx < len(self)
-            and bottom_right_idx // self.width == idx_row + 1
+            and bottom_right_idx // self.height == idx_row + 1
         ):
             neighbors.append(bottom_right_idx)
 
@@ -175,7 +178,7 @@ class GameBoard2D(BaseBoard):
             (-1, 1),
         ]
 
-    @db.timer
+    # @db.timer
     def step(self):
         new_board = copy.deepcopy(self.board)
         new_update_list = list()
@@ -211,8 +214,8 @@ class GameBoard2D(BaseBoard):
         self,
     ) -> tuple[np.ndarray, list[tuple[int, int]]]:
         board = [
-            [random.choice([0, 1]) for _ in range(self.width)]
-            for _ in range(self.height)
+            [random.choice([0, 1]) for _ in range(self.height)]
+            for _ in range(self.width)
         ]
         update_list = [
             (i, j) for i in range(self.width) for j in range(self.height)

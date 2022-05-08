@@ -7,6 +7,7 @@ import matplotlib.pyplot as plt
 
 from typing import Sequence
 
+from tool import debug_util as db
 
 class MatplotlibRenderer:
     def __init__(
@@ -23,7 +24,7 @@ class MatplotlibRenderer:
             os.makedirs(self.save_path)
 
     def view(self, board: Sequence) -> None:
-        board = np.array(board)
+        board = np.transpose(np.array(board), (1, 0))
         plt.imshow(board, cmap='gray_r')
         plt.pause(0.001)
         plt.draw()
@@ -31,6 +32,11 @@ class MatplotlibRenderer:
             plt.savefig(f"{self.save_path}/{self.iterations}.png")
             self.iterations += 1
 
+class Color:
+    alive=(128, 189, 38)
+    grid=(30, 30, 60)
+    background=(10, 10, 40)
+    about_to_die=(200, 200, 225)
 
 class PygameRenderer:
     def __init__(
@@ -44,24 +50,35 @@ class PygameRenderer:
     ) -> None:
         self.cellsize = cellsize
         
-        self.background = (10, 10, 40)
-        self.grid_color = (30, 30, 60)
-        self.alive_color = (200, 200, 225)
-        
+
         pygame.init()
         self.window = pygame.display.set_mode(
             (width * cellsize, height * cellsize)
         )
         pygame.display.set_caption(caption)
-        self.window.fill(self.grid_color)
+        self.window.fill(Color.grid)
         
     def view(self, board: Sequence):
-
+        
+        for event in pygame.event.get():
+            print(f"{pygame.event.get()}")
+            if event.type == pygame.QUIT:
+                pygame.quit()
+                return
+            
+            if pygame.mouse.get_pressed()[0]:
+                try:
+                    db.printInfo(event.pos)
+                    cell_position = event[0]//cellsize, event[1]//cellsize
+                except AttributeError:
+                    pass
+            
         for i, row in enumerate(board):
             for j, col in enumerate(row):
-                color = self.background
+                color = Color.background
                 if col == 1:
-                    color = self.alive_color
+                    color = Color.alive
+                    # color = (255, 255/(j+1), 255/(i+1))
                 pygame.draw.rect(
                     self.window,
                     color,
